@@ -20,7 +20,7 @@
   --muted: #6e6e73;
   --accent: #1a1a1a;
   --accent-fg: #ffffff;
-  --danger: #d64545;
+  --danger: #ff3b30;
   --radius: 28px;
   --radius-sm: 20px;
   --shadow: 0 8px 30px rgba(0,0,0,0.06);
@@ -38,7 +38,7 @@
     --muted: #8e8e93;
     --accent: #e5e5ea;
     --accent-fg: #000000;
-    --danger: #ff6b6b;
+    --danger: #ff453a;
     --shadow: 0 8px 30px rgba(0,0,0,0.4);
   }
 }
@@ -81,13 +81,28 @@ h1 { font-size: 22px; margin: 0; letter-spacing: 0.08em; font-weight: 700; }
 .empty { text-align: center; color: var(--muted); padding: 28px 12px; background: var(--card); border-radius: var(--radius); }
 .habit {
   background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  border: 2px solid transparent;
 }
-.habit-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.habit.delete-mode { border-color: var(--danger); }
+.habit-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.habit-info { flex: 1; min-width: 0; }
 .habit-name { font-size: 18px; font-weight: 600; line-height: 1.25; word-break: break-word; }
 .habit-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: var(--el); color: var(--muted); white-space: nowrap; }
 .habit-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .count-badge { color: var(--text); font-weight: 600; }
+.menu-btn {
+  min-width: 44px; min-height: 44px; border: none; border-radius: 14px; background: transparent; color: var(--muted);
+  font-size: 18px; line-height: 1; letter-spacing: 1px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.menu-btn:active { background: var(--el); }
+.habit.delete-mode .menu-btn { visibility: hidden; }
+.delete-btn {
+  position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: var(--danger); color: #fff; display: none; align-items: center; justify-content: center;
+  font-size: 22px; line-height: 1; cursor: pointer; z-index: 3; padding: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.habit.delete-mode .delete-btn { display: flex; }
 .habit-actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: stretch; }
 .charge {
   position: relative; min-height: 64px; border-radius: 24px; border: none; background: var(--el); overflow: hidden;
@@ -127,14 +142,6 @@ input[type="text"] {
 .chip { flex: 0 0 auto; min-height: 44px; border: none; border-radius: 999px; background: var(--el); color: var(--text); padding: 10px 14px; cursor: pointer; font-size: 14px; white-space: nowrap; }
 .chip:active { transform: scale(0.98); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.trash-zone {
-  position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom)); transform: translateX(-50%) translateY(20px);
-  min-width: 220px; min-height: 56px; border-radius: 28px; background: var(--danger); color: #fff; display: flex; align-items: center; justify-content: center;
-  gap: 8px; font-weight: 600; opacity: 0; pointer-events: none; z-index: 40; box-shadow: var(--shadow);
-}
-.trash-zone.active { pointer-events: auto; }
-.trash-zone.hot { transform: translateX(-50%) translateY(0) scale(1.03); }
-.dragging { opacity: 0.92; z-index: 50; }
 .focus-overlay {
   position: fixed; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center;
   padding: 24px; z-index: 35; text-align: center;
@@ -189,7 +196,7 @@ input[type="file"] { display: none; }
 
   <div class="section-title">Сегодня</div>
   <div class="list" id="habitList"></div>
-  <div class="hint">Удерживайте капсулу 1.2 с для тактильного заряда. Тактильный отклик работает на Android. Долгое нажатие (400 мс) на карточку — перетаскивание в корзину.</div>
+  <div class="hint">Удерживайте капсулу 1.2 с для тактильного заряда. Меню «•••» или долгое нажатие (500 мс) на название — режим удаления. Тактильный отклик работает на Android.</div>
 </div>
 
 <div class="bottom-bar">
@@ -222,8 +229,6 @@ input[type="file"] { display: none; }
   </div>
 </div>
 
-<div class="trash-zone" id="trashZone" aria-hidden="true">🗑 Удалить привычку</div>
-
 <div class="focus-overlay" id="focusOverlay" aria-live="polite">
   <div class="focus-name" id="focusHabitName">Фокус-капсула</div>
   <div class="timer" id="focusTimer">02:00</div>
@@ -246,7 +251,7 @@ input[type="file"] { display: none; }
   const STORAGE_KEY = 'impulse_state_v1';
   const TWO_MIN = 120;
   const HOLD_MS = 1200;
-  const LONG_PRESS_MS = 400;
+  const DELETE_PRESS_MS = 500;
   const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 
   const $ = (s, r=document) => r.querySelector(s);
@@ -258,7 +263,6 @@ input[type="file"] { display: none; }
   const focusOverlay = $('#focusOverlay');
   const focusTimerEl = $('#focusTimer');
   const focusHabitNameEl = $('#focusHabitName');
-  const trashZone = $('#trashZone');
   const toastWrap = $('#toastWrap');
   const presetsEl = $('#presets');
   const audio = $('#silentAudio');
@@ -267,8 +271,10 @@ input[type="file"] { display: none; }
 
   let wakeLock = null;
   let focusInterval = null;
-  let dragState = null;
   let audioCtx = null;
+  let deleteModeId = null;
+  let suppressNextCardClick = false;
+  let titleLongPress = null;
 
   function todayStr(d = new Date()) {
     const y = d.getFullYear();
@@ -389,6 +395,8 @@ input[type="file"] { display: none; }
     inertiaRing.setAttribute('stroke-dasharray', circumference.toFixed(2));
     inertiaRing.setAttribute('stroke-dashoffset', offset.toFixed(2));
 
+    if (deleteModeId && !State.habits.some(h => h.id === deleteModeId)) deleteModeId = null;
+
     if (!State.habits.length) {
       listEl.innerHTML = '<div class="empty">Пока нет привычек. Добавьте первую — и сделайте 2‑минутный старт.</div>';
       return;
@@ -401,13 +409,15 @@ input[type="file"] { display: none; }
       const count = typeof h.count === 'number' ? h.count : 0;
       return `
         <article class="habit ${done ? 'done' : ''}" data-id="${esc(h.id)}">
+          <button class="delete-btn" data-action="delete" data-id="${esc(h.id)}" aria-label="Удалить привычку">✕</button>
           <div class="habit-top">
-            <div>
+            <div class="habit-info" data-role="habit-title">
               <div class="habit-name">${esc(h.name)}</div>
               <div class="habit-meta">Инерция: ${Math.round(h.inertia)}%</div>
             </div>
             <div class="habit-badges">
               <span class="badge count-badge" data-count-id="${esc(h.id)}" title="Всего зарядов">⚡ ${count}</span>
+              <button class="menu-btn" data-action="menu" data-id="${esc(h.id)}" aria-label="Меню привычки">•••</button>
             </div>
           </div>
           <div class="habit-actions">
@@ -427,6 +437,12 @@ input[type="file"] { display: none; }
           </div>
         </article>`;
     }).join('');
+
+    if (deleteModeId) {
+      const active = getHabitCard(deleteModeId);
+      if (active) active.classList.add('delete-mode');
+      else deleteModeId = null;
+    }
   }
 
   function animateCountBadge(id) {
@@ -498,6 +514,7 @@ input[type="file"] { display: none; }
   // Hold-to-charge
   const holdMap = new WeakMap();
   function startHold(btn, habitId) {
+    if (deleteModeId === habitId) { exitDeleteMode(habitId); return; }
     const habit = State.habits.find(h => h.id === habitId);
     if (!habit || habit.completedToday) return;
     const fill = btn.querySelector('.charge-fill');
@@ -528,6 +545,87 @@ input[type="file"] { display: none; }
     if (fill) fill.style.width = '0%';
     holdMap.delete(btn);
     if (navigator.vibrate) navigator.vibrate(0);
+  }
+
+  // Delete mode (iOS-style)
+  function getHabitCard(id) { return listEl.querySelector('.habit[data-id="' + id + '"]'); }
+
+  function enterDeleteMode(id) {
+    if (deleteModeId && deleteModeId !== id) exitDeleteMode(deleteModeId, { immediate: true });
+    const card = getHabitCard(id);
+    if (!card) return;
+    if (deleteModeId === id) return;
+    deleteModeId = id;
+    card.classList.add('delete-mode');
+    if (navigator.vibrate) navigator.vibrate(40);
+    card.animate([
+      { transform: 'scale(1) rotate(0deg)' },
+      { transform: 'scale(1.02) rotate(-1deg)' },
+      { transform: 'scale(1.02) rotate(1deg)' },
+      { transform: 'scale(1.02) rotate(-0.5deg)' },
+      { transform: 'scale(1) rotate(0deg)' }
+    ], { duration: 340, easing: 'ease-in-out' });
+    const btn = card.querySelector('.delete-btn');
+    if (btn) {
+      btn.animate([
+        { opacity: 0, transform: 'scale(0.7)' },
+        { opacity: 1, transform: 'scale(1)' }
+      ], { duration: 180, easing: 'ease-in-out', fill: 'forwards' });
+    }
+  }
+
+  function exitDeleteMode(id, opts = {}) {
+    const targetId = id || deleteModeId;
+    if (!targetId || deleteModeId !== targetId) return;
+    const card = getHabitCard(targetId);
+    deleteModeId = null;
+    if (!card) return;
+    const btn = card.querySelector('.delete-btn');
+    if (opts.immediate) {
+      card.classList.remove('delete-mode');
+      return;
+    }
+    if (btn) {
+      btn.animate([
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(0.7)' }
+      ], { duration: 150, easing: 'ease-in-out', fill: 'forwards' });
+    }
+    card.animate([
+      { transform: 'scale(1.01)' },
+      { transform: 'scale(1)' }
+    ], { duration: 150, easing: 'ease-in-out' });
+    setTimeout(() => { card.classList.remove('delete-mode'); }, 160);
+  }
+
+  async function deleteHabitAnimated(id) {
+    const card = getHabitCard(id);
+    const h = State.habits.find(x => x.id === id);
+    if (!h) return;
+    if (deleteModeId === id) deleteModeId = null;
+    if (card) {
+      card.classList.remove('delete-mode');
+      const rect = card.getBoundingClientRect();
+      const cs = getComputedStyle(card);
+      const mb = parseFloat(cs.marginBottom) || 0;
+      card.style.overflow = 'hidden';
+      const anim = card.animate([
+        { opacity: 1, transform: 'scale(1)', height: rect.height + 'px', marginBottom: mb + 'px' },
+        { opacity: 0, transform: 'scale(0.97)', height: '0px', marginBottom: '0px' }
+      ], { duration: 240, easing: 'ease-in-out', fill: 'forwards' });
+      await new Promise(r => { anim.onfinish = r; });
+    }
+    State.habits = State.habits.filter(x => x.id !== id);
+    saveState();
+    render();
+    toast('Привычка удалена');
+  }
+
+  function clearTitleLongPress() {
+    if (titleLongPress) {
+      clearTimeout(titleLongPress.timer);
+      titleLongPress = null;
+    }
   }
 
   // Focus timer + Wake Lock + silent audio + gong
@@ -607,6 +705,7 @@ input[type="file"] { display: none; }
   async function startFocus(habitId) {
     const habit = State.habits.find(h => h.id === habitId);
     if (!habit) { toast('Добавьте привычку для фокуса'); return; }
+    exitDeleteMode(deleteModeId, { immediate: true });
     ensureAudioCtx();
     State.focus.habitId = habitId;
     State.focus.running = true;
@@ -772,79 +871,6 @@ input[type="file"] { display: none; }
     reader.readAsText(file);
   }
 
-  // Long press drag & drop delete
-  function showTrash(show) {
-    if (show) {
-      trashZone.classList.add('active');
-      trashZone.animate([{ opacity: 0, transform: 'translateX(-50%) translateY(20px)' }, { opacity: 1, transform: 'translateX(-50%) translateY(0)' }], { duration: 180, easing: 'ease-in-out', fill: 'forwards' });
-      trashZone.setAttribute('aria-hidden', 'false');
-    } else {
-      const anim = trashZone.animate([{ opacity: 1, transform: 'translateX(-50%) translateY(0)' }, { opacity: 0, transform: 'translateX(-50%) translateY(20px)' }], { duration: 150, easing: 'ease-in-out', fill: 'forwards' });
-      anim.onfinish = () => { trashZone.classList.remove('active', 'hot'); trashZone.setAttribute('aria-hidden', 'true'); };
-    }
-  }
-  function onCardPointerDown(e, card) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (e.target.closest('button')) return;
-    const id = card.dataset.id;
-    const startX = e.clientX, startY = e.clientY;
-    let moved = false;
-    let timer = setTimeout(() => {
-      timer = null;
-      dragState = { id, card, startX, startY, offsetX: 0, offsetY: 0, pointerId: e.pointerId };
-      card.classList.add('dragging');
-      card.setPointerCapture(e.pointerId);
-      const rect = card.getBoundingClientRect();
-      dragState.offsetX = startX - rect.left - rect.width / 2;
-      dragState.offsetY = startY - rect.top - rect.height / 2;
-      card.style.position = 'fixed';
-      card.style.left = (rect.left) + 'px';
-      card.style.top = (rect.top) + 'px';
-      card.style.width = rect.width + 'px';
-      card.style.margin = '0';
-      showTrash(true);
-      if (navigator.vibrate) navigator.vibrate(20);
-    }, LONG_PRESS_MS);
-    function move(ev) {
-      if (Math.abs(ev.clientX - startX) > 8 || Math.abs(ev.clientY - startY) > 8) moved = true;
-      if (!dragState) { if (moved && timer) { clearTimeout(timer); timer = null; } return; }
-      const x = ev.clientX - dragState.offsetX - card.offsetWidth / 2;
-      const y = ev.clientY - dragState.offsetY - card.offsetHeight / 2;
-      card.style.left = x + 'px';
-      card.style.top = y + 'px';
-      const tz = trashZone.getBoundingClientRect();
-      const over = ev.clientX >= tz.left && ev.clientX <= tz.right && ev.clientY >= tz.top && ev.clientY <= tz.bottom;
-      trashZone.classList.toggle('hot', over);
-      dragState.over = over;
-    }
-    function up(ev) {
-      if (timer) { clearTimeout(timer); timer = null; }
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      window.removeEventListener('pointercancel', up);
-      if (dragState && dragState.card === card) {
-        const over = dragState.over;
-        const delId = dragState.id;
-        dragState = null;
-        card.classList.remove('dragging');
-        card.style.position = ''; card.style.left = ''; card.style.top = ''; card.style.width = ''; card.style.margin = '';
-        showTrash(false);
-        if (over) {
-          State.habits = State.habits.filter(h => h.id !== delId);
-          saveState();
-          render();
-          if (navigator.vibrate) navigator.vibrate([15,30,15]);
-          toast('Привычка удалена');
-        } else {
-          render();
-        }
-      }
-    }
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', up);
-  }
-
   // Event wiring
   $('#addBtn').addEventListener('click', openModal);
   $('#fabAdd').addEventListener('click', openModal);
@@ -870,26 +896,78 @@ input[type="file"] { display: none; }
   listEl.addEventListener('pointerdown', (e) => {
     const charge = e.target.closest('button[data-action="charge"]');
     if (charge) { startHold(charge, charge.dataset.id); return; }
-    const card = e.target.closest('.habit');
-    if (card) onCardPointerDown(e, card);
+    const title = e.target.closest('[data-role="habit-title"]');
+    if (title && !e.target.closest('button')) {
+      const card = title.closest('.habit');
+      if (!card) return;
+      const id = card.dataset.id;
+      const sx = e.clientX, sy = e.clientY;
+      clearTitleLongPress();
+      titleLongPress = {
+        id, sx, sy,
+        timer: setTimeout(() => {
+          titleLongPress = null;
+          suppressNextCardClick = true;
+          enterDeleteMode(id);
+          setTimeout(() => { suppressNextCardClick = false; }, 450);
+        }, DELETE_PRESS_MS)
+      };
+    }
+  });
+  listEl.addEventListener('pointermove', (e) => {
+    if (!titleLongPress) return;
+    if (Math.abs(e.clientX - titleLongPress.sx) > 8 || Math.abs(e.clientY - titleLongPress.sy) > 8) {
+      clearTitleLongPress();
+    }
   });
   listEl.addEventListener('pointerup', (e) => {
     const charge = e.target.closest('button[data-action="charge"]');
     if (charge) cancelHold(charge);
+    clearTitleLongPress();
+  });
+  listEl.addEventListener('pointercancel', (e) => {
+    const charge = e.target.closest('button[data-action="charge"]');
+    if (charge) cancelHold(charge);
+    clearTitleLongPress();
   });
   listEl.addEventListener('pointerleave', (e) => {
     const charge = e.target.closest('button[data-action="charge"]');
     if (charge) cancelHold(charge);
   });
-  listEl.addEventListener('pointercancel', (e) => {
-    const charge = e.target.closest('button[data-action="charge"]');
-    if (charge) cancelHold(charge);
-  });
+
   listEl.addEventListener('click', (e) => {
-    const focusBtn = e.target.closest('button[data-action="focus"]');
-    if (focusBtn) startFocus(focusBtn.dataset.id);
+    const delBtn = e.target.closest('[data-action="delete"]');
+    if (delBtn) {
+      e.stopPropagation();
+      deleteHabitAnimated(delBtn.dataset.id);
+      return;
+    }
+    const menuBtn = e.target.closest('[data-action="menu"]');
+    if (menuBtn) {
+      e.stopPropagation();
+      const id = menuBtn.dataset.id;
+      if (deleteModeId === id) exitDeleteMode(id); else enterDeleteMode(id);
+      return;
+    }
+    const focusBtn = e.target.closest('[data-action="focus"]');
+    if (focusBtn) {
+      startFocus(focusBtn.dataset.id);
+      return;
+    }
+    if (deleteModeId) {
+      if (suppressNextCardClick) { suppressNextCardClick = false; return; }
+      const activeCard = getHabitCard(deleteModeId);
+      if (activeCard && activeCard.contains(e.target)) {
+        exitDeleteMode(deleteModeId);
+      }
+    }
   });
-  window.addEventListener('contextmenu', (e) => { if (dragState) e.preventDefault(); });
+
+  document.addEventListener('click', (e) => {
+    if (!deleteModeId) return;
+    const active = getHabitCard(deleteModeId);
+    if (active && !active.contains(e.target)) exitDeleteMode(deleteModeId);
+  });
 
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
