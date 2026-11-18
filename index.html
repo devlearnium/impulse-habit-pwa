@@ -86,6 +86,8 @@ h1 { font-size: 22px; margin: 0; letter-spacing: 0.08em; font-weight: 700; }
 .habit-name { font-size: 18px; font-weight: 600; line-height: 1.25; word-break: break-word; }
 .habit-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: var(--el); color: var(--muted); white-space: nowrap; }
+.habit-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.count-badge { color: var(--text); font-weight: 600; }
 .habit-actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: stretch; }
 .charge {
   position: relative; min-height: 64px; border-radius: 24px; border: none; background: var(--el); overflow: hidden;
@@ -120,6 +122,10 @@ label { font-size: 13px; color: var(--muted); }
 input[type="text"] {
   min-height: 52px; border-radius: 20px; border: 1px solid var(--el2); background: var(--surface); padding: 14px 16px; outline: none;
 }
+.presets { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.presets::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; min-height: 44px; border: none; border-radius: 999px; background: var(--el); color: var(--text); padding: 10px 14px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+.chip:active { transform: scale(0.98); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .trash-zone {
   position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom)); transform: translateX(-50%) translateY(20px);
@@ -201,6 +207,13 @@ input[type="file"] { display: none; }
     <div class="field">
       <label for="habitName">Название</label>
       <input type="text" id="habitName" maxlength="60" placeholder="Например: Читать 10 страниц" autocomplete="off">
+      <div class="presets" id="presets">
+        <button type="button" class="chip" data-preset="💧 Выпить воды">💧 Выпить воды</button>
+        <button type="button" class="chip" data-preset="📖 Читать 10 стр.">📖 Читать 10 стр.</button>
+        <button type="button" class="chip" data-preset="🧘 Разминка">🧘 Разминка</button>
+        <button type="button" class="chip" data-preset="📵 Без экрана перед сном">📵 Без экрана перед сном</button>
+        <button type="button" class="chip" data-preset="🇬🇧 5 новых слов">🇬🇧 5 новых слов</button>
+      </div>
     </div>
     <div class="row">
       <button class="pill" id="cancelModal">Отмена</button>
@@ -231,7 +244,6 @@ input[type="file"] { display: none; }
   'use strict';
 
   const STORAGE_KEY = 'impulse_state_v1';
-  const CACHE_META = 'impulse-pwa-v1';
   const TWO_MIN = 120;
   const HOLD_MS = 1200;
   const LONG_PRESS_MS = 400;
@@ -248,6 +260,7 @@ input[type="file"] { display: none; }
   const focusHabitNameEl = $('#focusHabitName');
   const trashZone = $('#trashZone');
   const toastWrap = $('#toastWrap');
+  const presetsEl = $('#presets');
   const audio = $('#silentAudio');
   audio.src = SILENT_WAV;
   audio.volume = 0.01;
@@ -255,13 +268,7 @@ input[type="file"] { display: none; }
   let wakeLock = null;
   let focusInterval = null;
   let dragState = null;
-
-  const defaultState = () => ({
-    version: 1,
-    habits: [],
-    lastOpenDate: todayStr(),
-    focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
-  });
+  let audioCtx = null;
 
   function todayStr(d = new Date()) {
     const y = d.getFullYear();
@@ -290,12 +297,34 @@ input[type="file"] { display: none; }
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
+  function makeHabit(name, now = Date.now()) {
+    return { id: uid() + Math.random().toString(36).slice(2,4), name: String(name), inertia: 100, completedToday: false, lastDone: null, createdAt: now, count: 0 };
+  }
+
+  function defaultState(seeded = false) {
+    const now = Date.now();
+    return {
+      version: 1,
+      habits: seeded ? [
+        { ...makeHabit('💧 Выпить воды', now), createdAt: now },
+        { ...makeHabit('🧘 Разминка', now + 1), createdAt: now + 1 },
+        { ...makeHabit('📖 Читать 10 стр.', now + 2), createdAt: now + 2 }
+      ] : [],
+      lastOpenDate: todayStr(),
+      focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
+    };
+  }
+
   let State = loadState();
 
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
+      if (!raw) {
+        const seeded = defaultState(true);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+        return seeded;
+      }
       const data = JSON.parse(raw);
       if (!data || !Array.isArray(data.habits)) return defaultState();
       return {
@@ -306,7 +335,8 @@ input[type="file"] { display: none; }
           inertia: typeof h.inertia === 'number' ? Math.max(0, Math.min(100, h.inertia)) : 100,
           completedToday: !!h.completedToday,
           lastDone: h.lastDone || null,
-          createdAt: h.createdAt || Date.now()
+          createdAt: h.createdAt || Date.now(),
+          count: typeof h.count === 'number' && isFinite(h.count) ? Math.max(0, Math.floor(h.count)) : 0
         })),
         lastOpenDate: data.lastOpenDate || todayStr(),
         focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
@@ -330,7 +360,6 @@ input[type="file"] { display: none; }
         if (diff === 1) {
           missed = h.lastDone === State.lastOpenDate ? 0 : 1;
         } else {
-          // days strictly between lastOpenDate and today are all missed; lastOpenDate day missed if not done then
           missed = (h.lastDone === State.lastOpenDate ? 0 : 1) + (diff - 1);
         }
         if (missed > 0) {
@@ -369,6 +398,7 @@ input[type="file"] { display: none; }
     listEl.innerHTML = sorted.map(h => {
       const done = !!h.completedToday;
       const status = done ? 'Заряжено сегодня' : 'Удерживайте 1.2 с';
+      const count = typeof h.count === 'number' ? h.count : 0;
       return `
         <article class="habit ${done ? 'done' : ''}" data-id="${esc(h.id)}">
           <div class="habit-top">
@@ -376,7 +406,9 @@ input[type="file"] { display: none; }
               <div class="habit-name">${esc(h.name)}</div>
               <div class="habit-meta">Инерция: ${Math.round(h.inertia)}%</div>
             </div>
-            <div class="badge">${done ? '✓' : '—'} ${Math.round(h.inertia)}%</div>
+            <div class="habit-badges">
+              <span class="badge count-badge" data-count-id="${esc(h.id)}" title="Всего зарядов">⚡ ${count}</span>
+            </div>
           </div>
           <div class="habit-actions">
             <button class="charge" data-action="charge" data-id="${esc(h.id)}" aria-label="Удерживайте для заряда привычки ${esc(h.name)}">
@@ -395,6 +427,16 @@ input[type="file"] { display: none; }
           </div>
         </article>`;
     }).join('');
+  }
+
+  function animateCountBadge(id) {
+    const badge = document.querySelector('[data-count-id="' + id + '"]');
+    if (!badge) return;
+    badge.animate([
+      { transform: 'scale(1)' },
+      { transform: 'scale(1.18)' },
+      { transform: 'scale(1)' }
+    ], { duration: 320, easing: 'ease-in-out' });
   }
 
   function toast(message) {
@@ -429,25 +471,27 @@ input[type="file"] { display: none; }
   function addHabit(name) {
     const trimmed = name.trim().replace(/\s+/g, ' ');
     if (!trimmed) { toast('Введите название привычки'); return; }
-    State.habits.push({ id: uid(), name: trimmed, inertia: 100, completedToday: false, lastDone: null, createdAt: Date.now() });
+    State.habits.push({ id: uid(), name: trimmed, inertia: 100, completedToday: false, lastDone: null, createdAt: Date.now(), count: 0 });
     saveState();
     render();
     closeModal();
     toast('Привычка добавлена');
   }
 
-  function completeHabit(id, source = 'charge') {
+  function completeHabit(id, source = 'charge', opts = {}) {
     const h = State.habits.find(x => x.id === id);
     if (!h) return;
     const today = todayStr();
     if (!h.completedToday) {
       h.inertia = Math.min(100, Math.round(h.inertia + 10));
     }
+    h.count = (typeof h.count === 'number' ? h.count : 0) + 1;
     h.completedToday = true;
     h.lastDone = today;
     saveState();
     render();
-    if (navigator.vibrate) navigator.vibrate([30, 40, 60]);
+    animateCountBadge(id);
+    if (!opts.skipDefaultVibrate && navigator.vibrate) navigator.vibrate([30, 40, 60]);
     toast(source === 'focus' ? 'Фокус засчитан как заряд' : 'Импульс получен');
   }
 
@@ -486,7 +530,37 @@ input[type="file"] { display: none; }
     if (navigator.vibrate) navigator.vibrate(0);
   }
 
-  // Focus timer + Wake Lock + silent audio
+  // Focus timer + Wake Lock + silent audio + gong
+  function ensureAudioCtx() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    try {
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      return audioCtx;
+    } catch (e) { return null; }
+  }
+  function playGong() {
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const dur = 1.5;
+    [528, 792].forEach((freq, i) => {
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(i === 0 ? 0.22 : 0.12, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + dur + 0.05);
+      } catch (e) {}
+    });
+  }
   async function requestWake() {
     try {
       if ('wakeLock' in navigator) {
@@ -517,7 +591,7 @@ input[type="file"] { display: none; }
   function stopFocusTimerUIOnly() {
     if (focusInterval) { clearInterval(focusInterval); focusInterval = null; }
   }
-  async function endFocus(completed) {
+  async function endFocus(completed, opts = {}) {
     const habitId = State.focus.habitId;
     stopFocusTimerUIOnly();
     State.focus.running = false;
@@ -528,11 +602,12 @@ input[type="file"] { display: none; }
     stopSilentAudio();
     await releaseWake();
     focusOverlay.classList.remove('show');
-    if (completed && habitId) completeHabit(habitId, 'focus');
+    if (completed && habitId) completeHabit(habitId, 'focus', { skipDefaultVibrate: !!opts.fromTimer });
   }
   async function startFocus(habitId) {
     const habit = State.habits.find(h => h.id === habitId);
     if (!habit) { toast('Добавьте привычку для фокуса'); return; }
+    ensureAudioCtx();
     State.focus.habitId = habitId;
     State.focus.running = true;
     State.focus.remaining = TWO_MIN;
@@ -550,8 +625,10 @@ input[type="file"] { display: none; }
       State.focus.remaining = left;
       updateFocusUI();
       if (left <= 0) {
+        playGong();
+        if (navigator.vibrate) navigator.vibrate([100, 60, 150]);
         toast('2 минуты выполнены');
-        endFocus(true);
+        endFocus(true, { fromTimer: true });
       }
     }, 250);
   }
@@ -678,7 +755,8 @@ input[type="file"] { display: none; }
             inertia: typeof h.inertia === 'number' ? Math.max(0, Math.min(100, h.inertia)) : 100,
             completedToday: !!h.completedToday,
             lastDone: h.lastDone || null,
-            createdAt: h.createdAt || Date.now()
+            createdAt: h.createdAt || Date.now(),
+            count: typeof h.count === 'number' && isFinite(h.count) ? Math.max(0, Math.floor(h.count)) : 0
           })),
           lastOpenDate: data.lastOpenDate || todayStr(),
           focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
@@ -707,7 +785,7 @@ input[type="file"] { display: none; }
   }
   function onCardPointerDown(e, card) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (e.target.closest('button')) return; // let buttons handle
+    if (e.target.closest('button')) return;
     const id = card.dataset.id;
     const startX = e.clientX, startY = e.clientY;
     let moved = false;
@@ -774,6 +852,12 @@ input[type="file"] { display: none; }
   modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
   $('#saveHabit').addEventListener('click', () => addHabit(habitNameInput.value));
   habitNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addHabit(habitNameInput.value); });
+  presetsEl.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-preset]');
+    if (!chip) return;
+    habitNameInput.value = chip.getAttribute('data-preset') || '';
+    habitNameInput.focus();
+  });
   $('#shareBtn').addEventListener('click', shareProgress);
   $('#shareBtn2').addEventListener('click', shareProgress);
   $('#exportBtn').addEventListener('click', exportData);
@@ -805,7 +889,6 @@ input[type="file"] { display: none; }
     const focusBtn = e.target.closest('button[data-action="focus"]');
     if (focusBtn) startFocus(focusBtn.dataset.id);
   });
-  // prevent context menu during long press on touch
   window.addEventListener('contextmenu', (e) => { if (dragState) e.preventDefault(); });
 
   document.addEventListener('visibilitychange', async () => {
