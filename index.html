@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ИМПУЛЬС</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --el: #f0f0f0;
+  --el2: #e6e6e6;
+  --text: #1a1a1a;
+  --muted: #6e6e73;
+  --accent: #1a1a1a;
+  --accent-fg: #ffffff;
+  --danger: #d64545;
+  --radius: 28px;
+  --radius-sm: 20px;
+  --shadow: 0 8px 30px rgba(0,0,0,0.06);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #000000;
+    --card: #1c1c1e;
+    --el: #2c2c2e;
+    --el2: #3a3a3c;
+    --text: #e5e5ea;
+    --muted: #8e8e93;
+    --accent: #e5e5ea;
+    --accent-fg: #000000;
+    --danger: #ff6b6b;
+    --shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); }
+body { overscroll-behavior-y: contain; }
+button, input { font: inherit; color: inherit; }
+.app {
+  min-height: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: calc(20px + var(--safe-top)) 20px calc(120px + var(--safe-bottom));
+}
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { width: 44px; height: 44px; border-radius: 14px; background: var(--el); display: grid; place-items: center; }
+h1 { font-size: 22px; margin: 0; letter-spacing: 0.08em; font-weight: 700; }
+.subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.icon-btn {
+  min-width: 44px; min-height: 44px; border: none; border-radius: 16px; background: var(--el);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 10px;
+}
+.icon-btn:active { transform: scale(0.98); }
+.hero {
+  background: var(--card); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow);
+  display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin-bottom: 18px;
+}
+.hero-label { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+.inertia-value { font-size: 42px; font-weight: 700; line-height: 1; }
+.inertia-note { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 36ch; }
+.ring { width: 88px; height: 88px; }
+.toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.pill {
+  min-height: 48px; border: none; border-radius: 20px; background: var(--el); color: var(--text);
+  padding: 12px 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-weight: 600;
+}
+.pill.primary { background: var(--accent); color: var(--accent-fg); }
+.section-title { font-size: 14px; color: var(--muted); margin: 8px 4px 10px; font-weight: 600; letter-spacing: .02em; }
+.list { display: flex; flex-direction: column; gap: 14px; }
+.empty { text-align: center; color: var(--muted); padding: 28px 12px; background: var(--card); border-radius: var(--radius); }
+.habit {
+  background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.habit-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.habit-name { font-size: 18px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+.habit-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: var(--el); color: var(--muted); white-space: nowrap; }
+.habit-actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: stretch; }
+.charge {
+  position: relative; min-height: 64px; border-radius: 24px; border: none; background: var(--el); overflow: hidden;
+  cursor: pointer; padding: 0 18px; text-align: left; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.charge-fill { position: absolute; inset: 0 auto 0 0; width: 0%; background: rgba(127,127,127,0.22); }
+.charge-content { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 100%; }
+.charge-label { font-weight: 600; }
+.charge-sub { font-size: 12px; color: var(--muted); }
+.focus-btn { min-width: 64px; min-height: 64px; border: none; border-radius: 24px; background: var(--el); cursor: pointer; display: grid; place-items: center; }
+.habit.done .charge { background: var(--accent); color: var(--accent-fg); }
+.habit.done .charge-sub { color: rgba(127,127,127,0.9); }
+.habit.done .charge-fill { background: rgba(255,255,255,0.12); width: 100% !important; }
+.hint { margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.bottom-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(12px + var(--safe-bottom));
+  background: linear-gradient(to top, var(--bg) 70%, rgba(0,0,0,0)); pointer-events: none;
+}
+.bottom-inner { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; pointer-events: auto; }
+.fab {
+  position: fixed; right: 20px; bottom: calc(92px + var(--safe-bottom)); width: 60px; height: 60px; border-radius: 22px;
+  border: none; background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow); cursor: pointer; font-size: 30px; line-height: 1;
+}
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: flex-end; justify-content: center; padding: 16px; z-index: 30;
+}
+.modal-backdrop.show { display: flex; }
+.modal { width: 100%; max-width: 680px; background: var(--card); border-radius: 30px; padding: 18px; box-shadow: var(--shadow); }
+.modal h2 { margin: 4px 4px 14px; font-size: 20px; }
+.field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+label { font-size: 13px; color: var(--muted); }
+input[type="text"] {
+  min-height: 52px; border-radius: 20px; border: 1px solid var(--el2); background: var(--surface); padding: 14px 16px; outline: none;
+}
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trash-zone {
+  position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom)); transform: translateX(-50%) translateY(20px);
+  min-width: 220px; min-height: 56px; border-radius: 28px; background: var(--danger); color: #fff; display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-weight: 600; opacity: 0; pointer-events: none; z-index: 40; box-shadow: var(--shadow);
+}
+.trash-zone.active { pointer-events: auto; }
+.trash-zone.hot { transform: translateX(-50%) translateY(0) scale(1.03); }
+.dragging { opacity: 0.92; z-index: 50; }
+.focus-overlay {
+  position: fixed; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; z-index: 35; text-align: center;
+}
+.focus-overlay.show { display: flex; }
+.timer { font-size: 64px; font-weight: 700; letter-spacing: -0.02em; margin: 10px 0 4px; }
+.focus-name { font-size: 18px; color: var(--muted); max-width: 28ch; }
+.focus-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 420px; margin-top: 28px; }
+.toast-wrap { position: fixed; left: 50%; top: calc(12px + var(--safe-top)); transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 8px; width: min(92vw, 420px); pointer-events: none; }
+.toast { background: var(--card); color: var(--text); border-radius: 18px; padding: 12px 14px; box-shadow: var(--shadow); font-size: 14px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+input[type="file"] { display: none; }
+@media (max-width: 420px) { .hero { grid-template-columns: 1fr; } .ring { width: 72px; height: 72px; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="44" height="44" rx="14" fill="currentColor" opacity="0.12"/>
+          <path d="M34 10L18 36h12l-2 18 18-28H34l0-16z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div>
+        <h1>ИМПУЛЬС</h1>
+        <div class="subtitle">Трекер привычек с тактильным зарядом</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="shareBtn" title="Поделиться прогрессом" aria-label="Поделиться прогрессом">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 20h16"/></svg>
+    </button>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="hero-label">Индекс инерции</div>
+      <div class="inertia-value" id="inertiaValue">100%</div>
+      <div class="inertia-note">Пропуск дня снижает инерцию привычки на 15%, но не обнуляет прогресс.</div>
+    </div>
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="42" stroke="var(--el)" stroke-width="10" fill="none"></circle>
+      <circle id="inertiaRing" cx="50" cy="50" r="42" stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="0"></circle>
+    </svg>
+  </section>
+
+  <div class="toolbar">
+    <button class="pill primary" id="addBtn">Новая привычка</button>
+    <button class="pill" id="focusFirstBtn">Фокус 2 мин</button>
+  </div>
+
+  <div class="section-title">Сегодня</div>
+  <div class="list" id="habitList"></div>
+  <div class="hint">Удерживайте капсулу 1.2 с для тактильного заряда. Тактильный отклик работает на Android. Долгое нажатие (400 мс) на карточку — перетаскивание в корзину.</div>
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <button class="pill" id="exportBtn">Экспорт</button>
+    <button class="pill" id="importBtn">Импорт</button>
+    <button class="pill" id="shareBtn2">Карточка дня</button>
+  </div>
+</div>
+<button class="fab" id="fabAdd" aria-label="Добавить привычку">+</button>
+
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Новая привычка</h2>
+    <div class="field">
+      <label for="habitName">Название</label>
+      <input type="text" id="habitName" maxlength="60" placeholder="Например: Читать 10 страниц" autocomplete="off">
+    </div>
+    <div class="row">
+      <button class="pill" id="cancelModal">Отмена</button>
+      <button class="pill primary" id="saveHabit">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="trash-zone" id="trashZone" aria-hidden="true">🗑 Удалить привычку</div>
+
+<div class="focus-overlay" id="focusOverlay" aria-live="polite">
+  <div class="focus-name" id="focusHabitName">Фокус-капсула</div>
+  <div class="timer" id="focusTimer">02:00</div>
+  <div class="hero-label">Сделайте хотя бы 2 минуты — этого достаточно, чтобы начать.</div>
+  <div class="focus-actions">
+    <button class="pill" id="focusCancel">Завершить</button>
+    <button class="pill primary" id="focusDone">Засчитать заряд</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json">
+
+<audio id="silentAudio" loop preload="auto"></audio>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'impulse_state_v1';
+  const CACHE_META = 'impulse-pwa-v1';
+  const TWO_MIN = 120;
+  const HOLD_MS = 1200;
+  const LONG_PRESS_MS = 400;
+  const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+  const $ = (s, r=document) => r.querySelector(s);
+  const listEl = $('#habitList');
+  const inertiaValueEl = $('#inertiaValue');
+  const inertiaRing = $('#inertiaRing');
+  const modalBackdrop = $('#modalBackdrop');
+  const habitNameInput = $('#habitName');
+  const focusOverlay = $('#focusOverlay');
+  const focusTimerEl = $('#focusTimer');
+  const focusHabitNameEl = $('#focusHabitName');
+  const trashZone = $('#trashZone');
+  const toastWrap = $('#toastWrap');
+  const audio = $('#silentAudio');
+  audio.src = SILENT_WAV;
+  audio.volume = 0.01;
+
+  let wakeLock = null;
+  let focusInterval = null;
+  let dragState = null;
+
+  const defaultState = () => ({
+    version: 1,
+    habits: [],
+    lastOpenDate: todayStr(),
+    focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
+  });
+
+  function todayStr(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function parseDate(str) {
+    const [y,m,d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function daysBetween(aStr, bStr) {
+    const a = parseDate(aStr);
+    const b = parseDate(bStr);
+    const ms = 24 * 60 * 60 * 1000;
+    return Math.floor((b - a) / ms);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  let State = loadState();
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.habits)) return defaultState();
+      return {
+        version: 1,
+        habits: data.habits.map(h => ({
+          id: h.id || uid(),
+          name: String(h.name || 'Привычка'),
+          inertia: typeof h.inertia === 'number' ? Math.max(0, Math.min(100, h.inertia)) : 100,
+          completedToday: !!h.completedToday,
+          lastDone: h.lastDone || null,
+          createdAt: h.createdAt || Date.now()
+        })),
+        lastOpenDate: data.lastOpenDate || todayStr(),
+        focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
+      };
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
+  }
+
+  function applyDayRollover() {
+    const today = todayStr();
+    if (State.lastOpenDate === today) return;
+    const diff = daysBetween(State.lastOpenDate, today);
+    if (diff > 0) {
+      State.habits.forEach(h => {
+        let missed = 0;
+        if (diff === 1) {
+          missed = h.lastDone === State.lastOpenDate ? 0 : 1;
+        } else {
+          // days strictly between lastOpenDate and today are all missed; lastOpenDate day missed if not done then
+          missed = (h.lastDone === State.lastOpenDate ? 0 : 1) + (diff - 1);
+        }
+        if (missed > 0) {
+          h.inertia = Math.max(0, h.inertia - 15 * missed);
+        }
+        h.completedToday = false;
+      });
+      if (diff >= 1) {
+        toast(diff > 1 ? `С возвращением: инерция снижена за ${diff} дн. пропуска` : 'Новый день: индекс инерции обновлён');
+      }
+    }
+    State.lastOpenDate = today;
+    saveState();
+  }
+
+  function averageInertia() {
+    if (!State.habits.length) return 100;
+    const sum = State.habits.reduce((a, h) => a + (h.inertia || 0), 0);
+    return Math.round(sum / State.habits.length);
+  }
+
+  function render() {
+    const avg = averageInertia();
+    inertiaValueEl.textContent = avg + '%';
+    const circumference = 2 * Math.PI * 42;
+    const offset = circumference * (1 - avg / 100);
+    inertiaRing.setAttribute('stroke-dasharray', circumference.toFixed(2));
+    inertiaRing.setAttribute('stroke-dashoffset', offset.toFixed(2));
+
+    if (!State.habits.length) {
+      listEl.innerHTML = '<div class="empty">Пока нет привычек. Добавьте первую — и сделайте 2‑минутный старт.</div>';
+      return;
+    }
+
+    const sorted = [...State.habits].sort((a,b) => (a.completedToday === b.completedToday) ? a.createdAt - b.createdAt : (a.completedToday ? 1 : -1));
+    listEl.innerHTML = sorted.map(h => {
+      const done = !!h.completedToday;
+      const status = done ? 'Заряжено сегодня' : 'Удерживайте 1.2 с';
+      return `
+        <article class="habit ${done ? 'done' : ''}" data-id="${esc(h.id)}">
+          <div class="habit-top">
+            <div>
+              <div class="habit-name">${esc(h.name)}</div>
+              <div class="habit-meta">Инерция: ${Math.round(h.inertia)}%</div>
+            </div>
+            <div class="badge">${done ? '✓' : '—'} ${Math.round(h.inertia)}%</div>
+          </div>
+          <div class="habit-actions">
+            <button class="charge" data-action="charge" data-id="${esc(h.id)}" aria-label="Удерживайте для заряда привычки ${esc(h.name)}">
+              <span class="charge-fill"></span>
+              <span class="charge-content">
+                <span>
+                  <div class="charge-label">${done ? 'Импульс получен' : 'Тактильный заряд'}</div>
+                  <div class="charge-sub">${status}</div>
+                </span>
+                <span aria-hidden="true">${done ? '●' : '◉'}</span>
+              </span>
+            </button>
+            <button class="focus-btn" data-action="focus" data-id="${esc(h.id)}" title="Фокус 2 минуты" aria-label="Запустить 2 минуты фокуса">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/><path d="M12 2v3"/></svg>
+            </button>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function toast(message) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = message;
+    toastWrap.appendChild(el);
+    el.animate([
+      { opacity: 0, transform: 'translateY(-8px) scale(0.98)' },
+      { opacity: 1, transform: 'translateY(0) scale(1)' }
+    ], { duration: 220, easing: 'ease-in-out', fill: 'forwards' });
+    setTimeout(() => {
+      const anim = el.animate([
+        { opacity: 1, transform: 'translateY(0) scale(1)' },
+        { opacity: 0, transform: 'translateY(-6px) scale(0.98)' }
+      ], { duration: 220, easing: 'ease-in-out', fill: 'forwards' });
+      anim.onfinish = () => el.remove();
+    }, 2400);
+  }
+
+  function openModal() {
+    modalBackdrop.classList.add('show');
+    modalBackdrop.setAttribute('aria-hidden', 'false');
+    habitNameInput.value = '';
+    setTimeout(() => habitNameInput.focus(), 50);
+  }
+  function closeModal() {
+    modalBackdrop.classList.remove('show');
+    modalBackdrop.setAttribute('aria-hidden', 'true');
+  }
+
+  function addHabit(name) {
+    const trimmed = name.trim().replace(/\s+/g, ' ');
+    if (!trimmed) { toast('Введите название привычки'); return; }
+    State.habits.push({ id: uid(), name: trimmed, inertia: 100, completedToday: false, lastDone: null, createdAt: Date.now() });
+    saveState();
+    render();
+    closeModal();
+    toast('Привычка добавлена');
+  }
+
+  function completeHabit(id, source = 'charge') {
+    const h = State.habits.find(x => x.id === id);
+    if (!h) return;
+    const today = todayStr();
+    if (!h.completedToday) {
+      h.inertia = Math.min(100, Math.round(h.inertia + 10));
+    }
+    h.completedToday = true;
+    h.lastDone = today;
+    saveState();
+    render();
+    if (navigator.vibrate) navigator.vibrate([30, 40, 60]);
+    toast(source === 'focus' ? 'Фокус засчитан как заряд' : 'Импульс получен');
+  }
+
+  // Hold-to-charge
+  const holdMap = new WeakMap();
+  function startHold(btn, habitId) {
+    const habit = State.habits.find(h => h.id === habitId);
+    if (!habit || habit.completedToday) return;
+    const fill = btn.querySelector('.charge-fill');
+    if (holdMap.has(btn)) return;
+    const anim = fill.animate([{ width: '0%' }, { width: '100%' }], { duration: HOLD_MS, easing: 'ease-in-out', fill: 'forwards' });
+    const vibTimers = [];
+    if (navigator.vibrate) {
+      navigator.vibrate(10);
+      vibTimers.push(setTimeout(() => navigator.vibrate(15), 350));
+      vibTimers.push(setTimeout(() => navigator.vibrate(20), 700));
+      vibTimers.push(setTimeout(() => navigator.vibrate([25, 30, 35]), 1000));
+    }
+    const state = { anim, vibTimers, done: false };
+    holdMap.set(btn, state);
+    anim.onfinish = () => {
+      if (!holdMap.has(btn)) return;
+      state.done = true;
+      holdMap.delete(btn);
+      completeHabit(habitId, 'charge');
+    };
+  }
+  function cancelHold(btn) {
+    const state = holdMap.get(btn);
+    if (!state) return;
+    state.vibTimers.forEach(clearTimeout);
+    state.anim.cancel();
+    const fill = btn.querySelector('.charge-fill');
+    if (fill) fill.style.width = '0%';
+    holdMap.delete(btn);
+    if (navigator.vibrate) navigator.vibrate(0);
+  }
+
+  // Focus timer + Wake Lock + silent audio
+  async function requestWake() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) { /* ignore */ }
+  }
+  async function releaseWake() {
+    try { if (wakeLock) await wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+  async function startSilentAudio() {
+    try { audio.currentTime = 0; audio.volume = 0.01; await audio.play(); } catch (e) { /* user gesture required; focus button is gesture */ }
+  }
+  function stopSilentAudio() {
+    try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+  }
+  function formatTime(sec) {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+  function updateFocusUI() {
+    const r = State.focus.remaining;
+    focusTimerEl.textContent = formatTime(Math.max(0, r));
+  }
+  function stopFocusTimerUIOnly() {
+    if (focusInterval) { clearInterval(focusInterval); focusInterval = null; }
+  }
+  async function endFocus(completed) {
+    const habitId = State.focus.habitId;
+    stopFocusTimerUIOnly();
+    State.focus.running = false;
+    State.focus.habitId = null;
+    State.focus.endTime = null;
+    State.focus.remaining = TWO_MIN;
+    saveState();
+    stopSilentAudio();
+    await releaseWake();
+    focusOverlay.classList.remove('show');
+    if (completed && habitId) completeHabit(habitId, 'focus');
+  }
+  async function startFocus(habitId) {
+    const habit = State.habits.find(h => h.id === habitId);
+    if (!habit) { toast('Добавьте привычку для фокуса'); return; }
+    State.focus.habitId = habitId;
+    State.focus.running = true;
+    State.focus.remaining = TWO_MIN;
+    State.focus.endTime = Date.now() + TWO_MIN * 1000;
+    saveState();
+    focusHabitNameEl.textContent = habit.name;
+    updateFocusUI();
+    focusOverlay.classList.add('show');
+    focusOverlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-in-out' });
+    await requestWake();
+    await startSilentAudio();
+    stopFocusTimerUIOnly();
+    focusInterval = setInterval(() => {
+      const left = Math.max(0, Math.ceil((State.focus.endTime - Date.now()) / 1000));
+      State.focus.remaining = left;
+      updateFocusUI();
+      if (left <= 0) {
+        toast('2 минуты выполнены');
+        endFocus(true);
+      }
+    }, 250);
+  }
+
+  function startFocusByShortcut() {
+    const target = State.habits.find(h => !h.completedToday) || State.habits[0];
+    if (!target) { openModal(); toast('Создайте привычку для фокуса'); return; }
+    startFocus(target.id);
+  }
+
+  // Share card
+  function drawShareCard() {
+    const w = 1080, h = 1350;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const bg = dark ? '#000000' : '#f8f9fa';
+    const card = dark ? '#1c1c1e' : '#ffffff';
+    const text = dark ? '#e5e5ea' : '#1a1a1a';
+    const muted = dark ? '#8e8e93' : '#6e6e73';
+    const el = dark ? '#2c2c2e' : '#f0f0f0';
+
+    ctx.fillStyle = bg; ctx.fillRect(0,0,w,h);
+    const pad = 80, cardY = 160, cardH = h - 240, r = 56;
+    roundRect(ctx, pad, cardY, w - pad*2, cardH, r, card);
+
+    ctx.fillStyle = muted; ctx.font = '600 34px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.fillText('ИМПУЛЬС · КАРТОЧКА ДНЯ', pad + 56, cardY + 90);
+    const d = new Date();
+    const dateStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+    ctx.fillStyle = muted; ctx.font = '400 32px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.fillText(dateStr, pad + 56, cardY + 140);
+
+    const avg = averageInertia();
+    ctx.fillStyle = text; ctx.font = '700 140px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.fillText(avg + '%', pad + 56, cardY + 320);
+    ctx.fillStyle = muted; ctx.font = '500 38px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.fillText('Индекс инерции', pad + 56, cardY + 380);
+
+    const barX = pad + 56, barY = cardY + 430, barW = w - pad*2 - 112, barH = 22;
+    roundRect(ctx, barX, barY, barW, barH, 11, el);
+    roundRect(ctx, barX, barY, Math.max(barH, barW * avg / 100), barH, 11, text);
+
+    ctx.fillStyle = muted; ctx.font = '600 34px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    ctx.fillText('Выполнено сегодня', pad + 56, cardY + 520);
+
+    const done = State.habits.filter(h => h.completedToday);
+    ctx.fillStyle = text; ctx.font = '500 36px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+    let y = cardY + 590;
+    const maxY = cardY + cardH - 80;
+    if (!done.length) {
+      ctx.fillStyle = muted; ctx.fillText('Пока без зарядов — начните с 2 минут.', pad + 56, y);
+    } else {
+      for (const h of done.slice(0, 10)) {
+        if (y > maxY) { ctx.fillStyle = muted; ctx.fillText('…', pad + 56, y); break; }
+        ctx.fillStyle = text;
+        ctx.fillText('• ' + truncate(h.name, 28), pad + 56, y);
+        y += 58;
+      }
+      if (done.length > 10 && y <= maxY) { ctx.fillStyle = muted; ctx.fillText(`и ещё ${done.length - 10}`, pad + 56, y); }
+    }
+    return canvas;
+  }
+  function roundRect(ctx, x, y, w, h, r, color) {
+    ctx.beginPath();
+    const rr = Math.min(r, w/2, h/2);
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+
+  async function shareProgress() {
+    try {
+      const canvas = drawShareCard();
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      if (!blob) throw new Error('no blob');
+      const file = new File([blob], 'impulse-day.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+        await navigator.share({ files: [file], title: 'ИМПУЛЬС — карточка дня', text: 'Мой индекс инерции сегодня' });
+        toast('Карточка отправлена');
+      } else {
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        a.href = url; a.download = 'impulse-day.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast('Карточка сохранена как PNG');
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      toast('Не удалось поделиться карточкой');
+    }
+  }
+
+  // Export/Import
+  function exportData() {
+    const data = JSON.stringify({ ...State, focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN } }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url; a.download = 'impulse-data.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Данные экспортированы');
+  }
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.habits)) throw new Error('bad');
+        State = {
+          version: 1,
+          habits: data.habits.map(h => ({
+            id: h.id || uid(),
+            name: String(h.name || 'Привычка').slice(0, 60),
+            inertia: typeof h.inertia === 'number' ? Math.max(0, Math.min(100, h.inertia)) : 100,
+            completedToday: !!h.completedToday,
+            lastDone: h.lastDone || null,
+            createdAt: h.createdAt || Date.now()
+          })),
+          lastOpenDate: data.lastOpenDate || todayStr(),
+          focus: { habitId: null, endTime: null, running: false, remaining: TWO_MIN }
+        };
+        applyDayRollover();
+        saveState();
+        render();
+        toast('Данные импортированы');
+      } catch (e) {
+        toast('Ошибка импорта файла');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Long press drag & drop delete
+  function showTrash(show) {
+    if (show) {
+      trashZone.classList.add('active');
+      trashZone.animate([{ opacity: 0, transform: 'translateX(-50%) translateY(20px)' }, { opacity: 1, transform: 'translateX(-50%) translateY(0)' }], { duration: 180, easing: 'ease-in-out', fill: 'forwards' });
+      trashZone.setAttribute('aria-hidden', 'false');
+    } else {
+      const anim = trashZone.animate([{ opacity: 1, transform: 'translateX(-50%) translateY(0)' }, { opacity: 0, transform: 'translateX(-50%) translateY(20px)' }], { duration: 150, easing: 'ease-in-out', fill: 'forwards' });
+      anim.onfinish = () => { trashZone.classList.remove('active', 'hot'); trashZone.setAttribute('aria-hidden', 'true'); };
+    }
+  }
+  function onCardPointerDown(e, card) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('button')) return; // let buttons handle
+    const id = card.dataset.id;
+    const startX = e.clientX, startY = e.clientY;
+    let moved = false;
+    let timer = setTimeout(() => {
+      timer = null;
+      dragState = { id, card, startX, startY, offsetX: 0, offsetY: 0, pointerId: e.pointerId };
+      card.classList.add('dragging');
+      card.setPointerCapture(e.pointerId);
+      const rect = card.getBoundingClientRect();
+      dragState.offsetX = startX - rect.left - rect.width / 2;
+      dragState.offsetY = startY - rect.top - rect.height / 2;
+      card.style.position = 'fixed';
+      card.style.left = (rect.left) + 'px';
+      card.style.top = (rect.top) + 'px';
+      card.style.width = rect.width + 'px';
+      card.style.margin = '0';
+      showTrash(true);
+      if (navigator.vibrate) navigator.vibrate(20);
+    }, LONG_PRESS_MS);
+    function move(ev) {
+      if (Math.abs(ev.clientX - startX) > 8 || Math.abs(ev.clientY - startY) > 8) moved = true;
+      if (!dragState) { if (moved && timer) { clearTimeout(timer); timer = null; } return; }
+      const x = ev.clientX - dragState.offsetX - card.offsetWidth / 2;
+      const y = ev.clientY - dragState.offsetY - card.offsetHeight / 2;
+      card.style.left = x + 'px';
+      card.style.top = y + 'px';
+      const tz = trashZone.getBoundingClientRect();
+      const over = ev.clientX >= tz.left && ev.clientX <= tz.right && ev.clientY >= tz.top && ev.clientY <= tz.bottom;
+      trashZone.classList.toggle('hot', over);
+      dragState.over = over;
+    }
+    function up(ev) {
+      if (timer) { clearTimeout(timer); timer = null; }
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (dragState && dragState.card === card) {
+        const over = dragState.over;
+        const delId = dragState.id;
+        dragState = null;
+        card.classList.remove('dragging');
+        card.style.position = ''; card.style.left = ''; card.style.top = ''; card.style.width = ''; card.style.margin = '';
+        showTrash(false);
+        if (over) {
+          State.habits = State.habits.filter(h => h.id !== delId);
+          saveState();
+          render();
+          if (navigator.vibrate) navigator.vibrate([15,30,15]);
+          toast('Привычка удалена');
+        } else {
+          render();
+        }
+      }
+    }
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }
+
+  // Event wiring
+  $('#addBtn').addEventListener('click', openModal);
+  $('#fabAdd').addEventListener('click', openModal);
+  $('#cancelModal').addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+  $('#saveHabit').addEventListener('click', () => addHabit(habitNameInput.value));
+  habitNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addHabit(habitNameInput.value); });
+  $('#shareBtn').addEventListener('click', shareProgress);
+  $('#shareBtn2').addEventListener('click', shareProgress);
+  $('#exportBtn').addEventListener('click', exportData);
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) importData(f); e.target.value = ''; });
+  $('#focusFirstBtn').addEventListener('click', startFocusByShortcut);
+  $('#focusCancel').addEventListener('click', () => endFocus(false));
+  $('#focusDone').addEventListener('click', () => endFocus(true));
+
+  listEl.addEventListener('pointerdown', (e) => {
+    const charge = e.target.closest('button[data-action="charge"]');
+    if (charge) { startHold(charge, charge.dataset.id); return; }
+    const card = e.target.closest('.habit');
+    if (card) onCardPointerDown(e, card);
+  });
+  listEl.addEventListener('pointerup', (e) => {
+    const charge = e.target.closest('button[data-action="charge"]');
+    if (charge) cancelHold(charge);
+  });
+  listEl.addEventListener('pointerleave', (e) => {
+    const charge = e.target.closest('button[data-action="charge"]');
+    if (charge) cancelHold(charge);
+  });
+  listEl.addEventListener('pointercancel', (e) => {
+    const charge = e.target.closest('button[data-action="charge"]');
+    if (charge) cancelHold(charge);
+  });
+  listEl.addEventListener('click', (e) => {
+    const focusBtn = e.target.closest('button[data-action="focus"]');
+    if (focusBtn) startFocus(focusBtn.dataset.id);
+  });
+  // prevent context menu during long press on touch
+  window.addEventListener('contextmenu', (e) => { if (dragState) e.preventDefault(); });
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      if (State.focus.running) {
+        const left = Math.max(0, Math.ceil((State.focus.endTime - Date.now()) / 1000));
+        State.focus.remaining = left;
+        if (left <= 0) endFocus(true); else { await requestWake(); }
+      }
+      const t = todayStr();
+      if (t !== State.lastOpenDate) { applyDayRollover(); render(); }
+    }
+  });
+
+  function handleShortcuts() {
+    const params = new URLSearchParams(location.search);
+    const action = params.get('action');
+    if (action === 'new') {
+      setTimeout(openModal, 150);
+    } else if (action === 'focus') {
+      setTimeout(startFocusByShortcut, 250);
+    }
+  }
+
+  function registerSW() {
+    if (location.protocol === 'file:') return;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  // init
+  applyDayRollover();
+  render();
+  handleShortcuts();
+  registerSW();
+})();
+</script>
+</body>
+</html>

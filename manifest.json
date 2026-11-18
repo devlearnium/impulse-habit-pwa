@@ -1,0 +1,54 @@
+{
+  "name": "ИМПУЛЬС",
+  "short_name": "Импульс",
+  "description": "Трекер полезных привычек с тактильным зарядом и фокус-капсулой.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Cpath d='M272 72L128 296h104l-16 144 160-240H272V72z' fill='%23e5e5ea'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Crect x='64' y='64' width='384' height='384' rx='72' fill='%231c1c1e'/%3E%3Cpath d='M272 120L152 296h96l-16 120 144-200h-104V120z' fill='%23e5e5ea'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Новая привычка",
+      "short_name": "Новая",
+      "description": "Быстро добавить новую привычку",
+      "url": "./?action=new",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='24' fill='%231c1c1e'/%3E%3Cpath d='M48 24v48M24 48h48' stroke='%23e5e5ea' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Фокус 2 минуты",
+      "short_name": "Фокус",
+      "description": "Запустить 2-минутный старт",
+      "url": "./?action=focus",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='24' fill='%231c1c1e'/%3E%3Ccircle cx='48' cy='52' r='22' stroke='%23e5e5ea' stroke-width='8' fill='none'/%3E%3Cpath d='M48 42v12l8 8' stroke='%23e5e5ea' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M40 18h16' stroke='%23e5e5ea' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
